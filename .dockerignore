@@ -4,3 +4,30 @@ node_modules
 npm-debug.log
 Dockerfile
 docker-compose.yml
+
+# Desktop application (Python/PyQt)
+desktop/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env*.local
+
