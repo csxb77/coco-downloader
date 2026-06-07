@@ -39,3 +39,26 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# desktop reference and examples
+desktop/examples/
+desktop/PyQt-Fluent-Widgets/
+desktop/Fluent-M3U8/
+desktop/PYTHON_STYLE_GUIDE.md
