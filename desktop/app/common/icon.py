@@ -13,3 +13,11 @@ class Icon(FluentIconBase, Enum):
 
     def path(self, theme=Theme.AUTO):
         return f":/app/images/icons/{self.value}_{getIconColor(theme)}.svg"
+
+
+class Logo(FluentIconBase, Enum):
+
+    SMILEFACE = "Smileface"
+
+    def path(self, theme=Theme.AUTO):
+        return f":/app/images/logo/{self.value}.svg"

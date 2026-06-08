@@ -79,6 +79,8 @@ class MediaPrepareThread(QThread):
             extra.update(self.extra_overrides)
             if self.item.provider == "netease-official" and not extra.get("level"):
                 extra["level"] = "exhigh"
+            if self.item.provider == "qq-official":
+                extra["usage"] = "playback"
             if self.item.cover:
                 extra["cover"] = self.item.cover
             play_info = provider.get_play_info(self.item.id, extra)

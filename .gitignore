@@ -60,5 +60,6 @@ build/
 # desktop reference and examples
 desktop/examples/
 desktop/PyQt-Fluent-Widgets/
+desktop/Fluent-M3U8/
 desktop/Groove/
 desktop/PYTHON_STYLE_GUIDE.md

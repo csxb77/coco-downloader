@@ -2,6 +2,10 @@
     "Update": {
         "CheckUpdateAtStartUp": true
     },
+    "Download": {
+        "FilenameRule": "title_artist",
+        "Folder": "D:/Users/markchen.DESKTOP-SNGEVAJ/Downloads"
+    },
     "MainWindow": {
         "DpiScale": "Auto",
         "Language": "Auto",

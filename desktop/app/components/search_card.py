@@ -49,7 +49,6 @@ class SearchCard(SimpleCardWidget):
         self.platformComboBox.setFixedHeight(40)
         self.platformComboBox.addItems([
             self.tr("网易云官方"),
-            self.tr("QQ音乐官方"),
             self.tr("歌曲宝"),
             self.tr("歌曲海"),
             self.tr("布谷"),

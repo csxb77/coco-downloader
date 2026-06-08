@@ -1,9 +1,11 @@
 # coding: utf-8
-from PyQt5.QtCore import QThread, Qt, pyqtSignal
-from PyQt5.QtGui import QFont
+from PyQt5.QtCore import QThread, Qt, QSize, pyqtSignal
+from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import QLabel, QWidget, QVBoxLayout
 
-from qfluentwidgets import InfoBar, InfoBarPosition, ScrollArea, setFont
+from PyQt5.QtWidgets import QGraphicsDropShadowEffect
+
+from qfluentwidgets import Action, CommandBarView, FluentIcon, InfoBar, InfoBarPosition, ScrollArea, isDarkTheme, setFont
 
 from ..common.style_sheet import StyleSheet
 from ..common.signal_bus import signalBus
@@ -69,6 +71,32 @@ class MusicSearchThread(QThread):
             )
 
 
+class SongSelectionCommandBarView(CommandBarView):
+    """Bottom command bar for selected search results."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.downloadAction = Action(FluentIcon.DOWNLOAD, self.tr("批量下载"), self)
+        self.selectAllAction = Action(FluentIcon.CHECKBOX, self.tr("全选"), self)
+        self.cancelAction = Action(FluentIcon.CLEAR_SELECTION, self.tr("取消"), self)
+
+        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.setIconSize(QSize(18, 18))
+        self.addActions([self.downloadAction])
+        self.addSeparator()
+        self.addActions([self.selectAllAction, self.cancelAction])
+        self.resizeToSuitableWidth()
+        self._set_shadow_effect()
+
+    def _set_shadow_effect(self):
+        color = QColor(0, 0, 0, 80 if isDarkTheme() else 30)
+        effect = QGraphicsDropShadowEffect(self)
+        effect.setBlurRadius(35)
+        effect.setOffset(0, 8)
+        effect.setColor(color)
+        self.setGraphicsEffect(effect)
+
+
 class HomeInterface(ScrollArea):
     """Home interface"""
 
@@ -80,6 +108,7 @@ class HomeInterface(ScrollArea):
         self.searchCard = SearchCard(self)
         self.resultTitleLabel = QLabel(self)
         self.placeholderWidget = PlaceholderWidget(self)
+        self.selectionCommandBar = SongSelectionCommandBarView(self)
         self.songListWidget = None
         self.searchThread = None
         self.searchRequestId = 0
@@ -108,6 +137,7 @@ class HomeInterface(ScrollArea):
 
         StyleSheet.HOME_INTERFACE.apply(self)
         self.scrollWidget.setStyleSheet("QWidget{background:transparent}")
+        self.selectionCommandBar.hide()
 
         self._init_layout()
 
@@ -122,6 +152,9 @@ class HomeInterface(ScrollArea):
     def _connect_signals(self):
         self.searchCard.searchRequested.connect(self._on_search)
         self.searchCard.platformChanged.connect(self._sync_preview_hint)
+        self.selectionCommandBar.downloadAction.triggered.connect(self._download_selected_songs)
+        self.selectionCommandBar.selectAllAction.triggered.connect(self._select_all_songs)
+        self.selectionCommandBar.cancelAction.triggered.connect(self._clear_song_selection)
         signalBus.playbackTrackChanged.connect(self._on_playback_track_changed)
 
     def _on_search(self, keyword: str, platform: str):
@@ -225,6 +258,7 @@ class HomeInterface(ScrollArea):
             self.songListWidget.loadMoreRequested.connect(self._on_load_more)
             self.songListWidget.songPlayRequested.connect(self._on_song_play_requested)
             self.songListWidget.songDownloadRequested.connect(self._on_song_download_requested)
+            self.songListWidget.selectionCountChanged.connect(self._on_song_selection_count_changed)
             self.vBoxLayout.addWidget(self.songListWidget, 1)
         else:
             self.songListWidget.set_songs(songs)
@@ -321,6 +355,9 @@ class HomeInterface(ScrollArea):
             return
 
         item = self.currentItems[index]
+        self._request_download(item)
+
+    def _request_download(self, item: MusicItem) -> None:
         if self._is_netease_official(item.provider):
             dialog = NeteaseQualityDialog(self.window())
             if dialog.exec():
@@ -328,6 +365,42 @@ class HomeInterface(ScrollArea):
             return
 
         signalBus.downloadRequested.emit(item, {})
+
+    def _download_selected_songs(self) -> None:
+        if self.songListWidget is None:
+            return
+        indexes = self.songListWidget.selected_song_indices()
+        if not indexes:
+            return
+
+        netease_level = None
+        if any(self._is_netease_official(self.currentItems[index].provider) for index in indexes):
+            dialog = NeteaseQualityDialog(self.window())
+            if not dialog.exec():
+                return
+            netease_level = dialog.selected_level
+
+        for index in indexes:
+            item = self.currentItems[index]
+            overrides = {"_batch": True}
+            if netease_level and self._is_netease_official(item.provider):
+                overrides["level"] = netease_level
+            signalBus.downloadRequested.emit(item, overrides)
+        self.songListWidget.clear_selection()
+
+    def _select_all_songs(self) -> None:
+        if self.songListWidget is not None:
+            self.songListWidget.select_all_songs()
+
+    def _clear_song_selection(self) -> None:
+        if self.songListWidget is not None:
+            self.songListWidget.clear_selection()
+
+    def _on_song_selection_count_changed(self, count: int) -> None:
+        self.selectionCommandBar.setVisible(count > 0)
+        if count > 0:
+            self.selectionCommandBar.raise_()
+            self._move_selection_command_bar()
 
     def _on_playback_track_changed(self, item: object, index: int) -> None:
         if self.songListWidget is None:
@@ -349,6 +422,15 @@ class HomeInterface(ScrollArea):
 
     def _is_netease_official(self, provider: str) -> bool:
         return provider in NETEASE_OFFICIAL_PLATFORMS
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._move_selection_command_bar()
+
+    def _move_selection_command_bar(self) -> None:
+        x = (self.width() - self.selectionCommandBar.width()) // 2
+        y = self.height() - self.selectionCommandBar.sizeHint().height() - 20
+        self.selectionCommandBar.move(max(0, x), max(0, y))
 
     def _show_search_error_info_bar(self, message: str, error_kind: str) -> None:
         parent = self.window()

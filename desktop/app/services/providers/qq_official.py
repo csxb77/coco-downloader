@@ -8,6 +8,7 @@ from app.models.music import MusicItem, PlayInfo
 
 from .base import MusicProvider
 from .http_client import ProviderHttpClient
+from .qq import QQProvider
 
 LOGGER = logging.getLogger(__name__)
 REQUEST_TIMEOUT = 15
@@ -53,6 +54,7 @@ class QQOfficialProvider(MusicProvider):
 
     def __init__(self) -> None:
         self._http = ProviderHttpClient()
+        self._qq_provider = QQProvider()
 
     def search(self, query: str, limit: int = 20, offset: int = 0) -> list[MusicItem]:
         page_size = _normalize_limit(limit)
@@ -81,7 +83,9 @@ class QQOfficialProvider(MusicProvider):
         return [item for item in (self._map_item(song) for song in songs) if item]
 
     def get_play_info(self, song_id: str, extra: dict[str, Any] | None = None) -> PlayInfo:
-        raise NotImplementedError("QQ official provider only supports search now")
+        context = extra or {}
+        play_info = self._resolve_with_qq(song_id, context)
+        return self._complete_play_info(play_info, context)
 
     def _build_payload(self, query: str, limit: int, page_num: int) -> dict[str, Any]:
         return {
@@ -141,5 +145,33 @@ class QQOfficialProvider(MusicProvider):
             cover=cover,
             duration=_format_duration(song.get("interval")),
             provider=self.name,
-            extra={"mid": song_mid} if isinstance(song_mid, str) and song_mid else {},
+            extra=self._build_item_extra(song, song_mid, cover),
+        )
+
+    def _build_item_extra(self, song: dict[str, Any], song_mid: Any, cover: str | None) -> dict[str, Any]:
+        extra = {
+            "title": song.get("name") or "",
+            "artist": _join_singers(song.get("singer")),
+        }
+        if isinstance(song_mid, str) and song_mid:
+            extra["mid"] = song_mid
+        if cover:
+            extra["cover"] = cover
+        return extra
+
+    def _resolve_with_qq(self, song_id: str, extra: dict[str, Any]) -> PlayInfo:
+        mid = str(extra.get("mid") or song_id).strip()
+        if not mid:
+            raise ValueError("缺少 QQ 音乐 mid")
+        return self._qq_provider.get_play_info(mid, extra)
+
+    def _complete_play_info(self, play_info: PlayInfo, extra: dict[str, Any]) -> PlayInfo:
+        if play_info.cover:
+            return play_info
+        return PlayInfo(
+            url=play_info.url,
+            type=play_info.type,
+            bitrate=play_info.bitrate,
+            cover=str(extra.get("cover") or "") or None,
+            headers=play_info.headers,
         )

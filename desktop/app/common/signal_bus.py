@@ -10,10 +10,14 @@ class SignalBus(QObject):
     playPlaylistRequested = pyqtSignal(list, int)
     playbackError = pyqtSignal(str)
     playbackTrackChanged = pyqtSignal(object, int)
-    downloadStarted = pyqtSignal(str)
+    downloadStarted = pyqtSignal(str, object)
     downloadRequested = pyqtSignal(object, object)
-    downloadFinished = pyqtSignal(str)
-    downloadFailed = pyqtSignal(str)
+    downloadTaskUpdated = pyqtSignal(object)
+    downloadProgressChanged = pyqtSignal(object, object)
+    downloadRetryRequested = pyqtSignal(object)
+    downloadCancelRequested = pyqtSignal(object)
+    downloadFinished = pyqtSignal(str, object)
+    downloadFailed = pyqtSignal(str, object)
 
 
 signalBus = SignalBus()

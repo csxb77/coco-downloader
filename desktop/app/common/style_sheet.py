@@ -12,6 +12,7 @@ class StyleSheet(StyleSheetBase, Enum):
     HOME_INTERFACE = "home_interface"
     SETTING_INTERFACE = "setting_interface"
     SONG_LIST_WIDGET = "song_list_widget"
+    DOWNLOAD_INTERFACE = "download_interface"
 
     def path(self, theme=Theme.AUTO):
         theme = qconfig.theme if theme == Theme.AUTO else theme

@@ -235,6 +235,7 @@ class SongRow(QWidget):
 
     playRequested = pyqtSignal()
     downloadRequested = pyqtSignal()
+    selectionChanged = pyqtSignal(bool)
     DELTAS = [13, 6, -3, -6]
 
     def __init__(self, song: SongInfo, parent: QWidget | None = None) -> None:
@@ -349,6 +350,9 @@ class SongRow(QWidget):
     def set_selected(self, selected: bool) -> None:
         """Set selected state"""
         self.is_selected = selected
+        self.song_name_card.check_box.blockSignals(True)
+        self.song_name_card.check_box.setChecked(selected)
+        self.song_name_card.check_box.blockSignals(False)
         self._apply_state(self._current_widget_state(), self._current_card_state())
         self.song_name_card.set_widgets_hidden(not self.has_enter and not self.is_playing)
 
@@ -371,6 +375,7 @@ class SongRow(QWidget):
     def _on_checked(self, checked: bool) -> None:
         """Handle checkbox toggled"""
         self.set_selected(checked)
+        self.selectionChanged.emit(checked)
 
     def enterEvent(self, event) -> None:
         """Handle mouse enter event"""
@@ -449,6 +454,7 @@ class SongListWidget(QListWidget):
     loadMoreRequested = pyqtSignal()
     songPlayRequested = pyqtSignal(int)
     songDownloadRequested = pyqtSignal(int)
+    selectionCountChanged = pyqtSignal(int)
 
     def __init__(self, songs: list[SongInfo] | None = None, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -538,6 +544,7 @@ class SongListWidget(QListWidget):
         row = SongRow(song, self)
         row.playRequested.connect(lambda checked=False, song_row=row: self._emit_song_play_requested(song_row))
         row.downloadRequested.connect(lambda checked=False, song_row=row: self._emit_song_download_requested(song_row))
+        row.selectionChanged.connect(lambda checked=False: self.selectionCountChanged.emit(len(self.selected_song_indices())))
         self.addItem(item)
         self.setItemWidget(item, row)
         self._song_count += 1
@@ -569,6 +576,40 @@ class SongListWidget(QListWidget):
             row = self.itemWidget(item)
             if isinstance(row, SongRow):
                 row.set_play(index == playing_index)
+
+    def selected_song_indices(self) -> list[int]:
+        """Return selected song row indexes, excluding the load-more row."""
+        indexes: list[int] = []
+        for index in range(self.count()):
+            item = self.item(index)
+            if item is self._load_more_item:
+                continue
+            row = self.itemWidget(item)
+            if isinstance(row, SongRow) and row.is_selected:
+                indexes.append(index)
+        return indexes
+
+    def select_all_songs(self) -> None:
+        """Select all song rows."""
+        for index in range(self.count()):
+            item = self.item(index)
+            if item is self._load_more_item:
+                continue
+            row = self.itemWidget(item)
+            if isinstance(row, SongRow):
+                row.set_selected(True)
+        self.selectionCountChanged.emit(len(self.selected_song_indices()))
+
+    def clear_selection(self) -> None:
+        """Clear all selected song rows."""
+        for index in range(self.count()):
+            item = self.item(index)
+            if item is self._load_more_item:
+                continue
+            row = self.itemWidget(item)
+            if isinstance(row, SongRow):
+                row.set_selected(False)
+        self.selectionCountChanged.emit(0)
 
     def _add_load_more_row(self) -> None:
         if self._load_more_item is not None:

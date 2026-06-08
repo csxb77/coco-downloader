@@ -10,6 +10,7 @@ from qfluentwidgets import FluentIcon as FIF
 from qframelesswindow import FramelessWindow, TitleBar
 
 from ..components import PlayBar
+from .download_interface import DownloadInterface
 from .home_interface import HomeInterface
 from .setting_interface import SettingInterface
 from ..common.config import cfg
@@ -100,6 +101,7 @@ class MainWindow(FramelessWindow):
         self.playerBar = PlayBar(parent=self)
 
         self.homeInterface = HomeInterface(self)
+        self.downloadInterface = DownloadInterface(self)
         self.settingInterface = SettingInterface(self)
         self.playbackService = PlaybackService(self.playerBar, self)
         self.downloadService = DownloadService(self)
@@ -142,6 +144,12 @@ class MainWindow(FramelessWindow):
             FIF.HOME,
             '首页',
             FIF.HOME_FILL
+        )
+
+        self.addSubInterface(
+            self.downloadInterface,
+            FIF.CLOUD_DOWNLOAD,
+            '下载',
         )
 
         self.addSubInterface(
@@ -204,7 +212,10 @@ class MainWindow(FramelessWindow):
             parent=self,
         )
 
-    def showDownloadStarted(self, song_name: str):
+    def showDownloadStarted(self, song_name: str, task_info=None):
+        if getattr(task_info, "is_batch", False):
+            return
+
         ring = IndeterminateProgressRing(self)
         ring.setFixedSize(18, 18)
         ring.setStrokeWidth(3)
@@ -223,7 +234,7 @@ class MainWindow(FramelessWindow):
         bar.hBoxLayout.insertWidget(0, ring, 0, Qt.AlignVCenter)
         bar.show()
 
-    def showDownloadFinished(self, file_path: str):
+    def showDownloadFinished(self, file_path: str, task_info=None):
         InfoBar.success(
             title=self.tr("下载完成"),
             content=file_path,
@@ -234,7 +245,7 @@ class MainWindow(FramelessWindow):
             parent=self,
         )
 
-    def showDownloadFailed(self, message: str):
+    def showDownloadFailed(self, message: str, task_info=None):
         InfoBar.error(
             title=self.tr("下载失败"),
             content=message or self.tr("无法下载当前歌曲"),

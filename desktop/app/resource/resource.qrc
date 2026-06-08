@@ -5,6 +5,7 @@
         <file>images/icons/Settings_white.svg</file>
         <file>images/icons/Settings_black.svg</file>
         <file>images/logo.png</file>
+        <file>images/logo/Smileface.svg</file>
         <file>images/undraw_location-search.svg</file>
 
         <file>images/song_list_widget/Add_black.svg</file>
@@ -58,5 +59,7 @@
         <file>qss/dark/main_window.qss</file>
         <file>qss/light/song_list_widget.qss</file>
         <file>qss/dark/song_list_widget.qss</file>
+        <file>qss/light/download_interface.qss</file>
+        <file>qss/dark/download_interface.qss</file>
     </qresource>
 </RCC>
