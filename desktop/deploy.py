@@ -13,6 +13,10 @@ PROJECT_DIR = Path(__file__).resolve().parent
 BUILD_DIR = PROJECT_DIR / "build"
 DIST_FOLDER = BUILD_DIR / f"{APP_NAME}.dist"
 WINDOWS_VERSION = VERSION.lstrip("vV")
+QT_PLUGIN_FAMILIES = "sensible"
+LOGO_ICON = "app/resource/images/logo/CocoDownloader.ico"
+LOGO_PNG = "app/resource/images/logo/CocoDownloader.png"
+NUITKA_COMMAND = [sys.executable, "-m", "nuitka"]
 
 
 def _copy_path(source: Path, target: Path) -> None:
@@ -43,14 +47,14 @@ def _copy_runtime_dependencies() -> None:
 
 def _windows_args() -> list[str]:
     return [
-        "nuitka",
+        *NUITKA_COMMAND,
         "--standalone",
         "--windows-disable-console",
         "--assume-yes-for-downloads",
         "--mingw64",
         "--plugin-enable=pyqt5",
-        "--include-qt-plugins=sensible,styles",
-        "--windows-icon-from-ico=app/resource/images/logo.ico",
+        f"--include-qt-plugins={QT_PLUGIN_FAMILIES}",
+        f"--windows-icon-from-ico={LOGO_ICON}",
         "--windows-file-description=CoCo Downloader",
         "--windows-company-name=markcxx",
         "--windows-product-name=CoCo Downloader",
@@ -65,20 +69,18 @@ def _windows_args() -> list[str]:
 
 def _macos_args() -> list[str]:
     return [
-        sys.executable,
-        "-m",
-        "nuitka",
+        *NUITKA_COMMAND,
         "--standalone",
         "--macos-create-app-bundle",
         "--macos-disable-console",
         "--assume-yes-for-downloads",
         "--plugin-enable=pyqt5",
-        "--include-qt-plugins=sensible,styles",
+        f"--include-qt-plugins={QT_PLUGIN_FAMILIES}",
         "--show-progress",
         "--show-memory",
         f"--macos-app-version={WINDOWS_VERSION}",
         "--macos-app-name=CoCo-downloader",
-        "--macos-app-icon=app/resource/images/logo.png",
+        f"--macos-app-icon={LOGO_PNG}",
         "--copyright=markcxx",
         f"--output-dir={BUILD_DIR}",
         APP_ENTRY,
@@ -87,13 +89,11 @@ def _macos_args() -> list[str]:
 
 def _linux_args() -> list[str]:
     return [
-        sys.executable,
-        "-m",
-        "nuitka",
+        *NUITKA_COMMAND,
         "--standalone",
         "--assume-yes-for-downloads",
         "--plugin-enable=pyqt5",
-        "--include-qt-plugins=sensible,styles",
+        f"--include-qt-plugins={QT_PLUGIN_FAMILIES}",
         "--show-progress",
         "--show-memory",
         f"--output-dir={BUILD_DIR}",
