@@ -9,6 +9,7 @@ import { MusicItem } from "@/types/music";
 import { PlayerBar } from "@/components/PlayerBar";
 import { DownloadDrawer } from "@/components/DownloadDrawer";
 import { QualitySelectModal } from "@/components/QualitySelectModal";
+import { FullscreenPlayerDrawer } from "@/components/FullscreenPlayerDrawer";
 import { DownloadTask } from "@/types/download";
 import axios from "axios";
 
@@ -22,16 +23,34 @@ type QualityOption = {
 type ProviderExtra = {
   selectedQuality?: string;
   selectedFormat?: string;
+  selectedLevel?: string;
+  level?: string;
+  selectedParser?: string;
   qualityOptions?: QualityOption[];
 };
 
 type QualityModalState = {
   mode: "single" | "batch";
   items: MusicItem[];
-  jooxCount: number;
+  qualityItemCount: number;
+  optionKind: "quality" | "downloadSource";
+};
+
+type LyricLine = {
+  time: number;
+  text: string;
 };
 
 function buildQualityValue(extra?: ProviderExtra) {
+  if (extra?.selectedParser) {
+    return extra.selectedParser;
+  }
+  if (extra?.selectedLevel) {
+    return extra.selectedLevel;
+  }
+  if (extra?.level) {
+    return extra.level;
+  }
   if (extra?.selectedQuality && extra?.selectedFormat) {
     return `${extra.selectedQuality}:${extra.selectedFormat}`;
   }
@@ -55,17 +74,42 @@ function collectQualityOptions(items: MusicItem[]) {
       }
     }
   }
-  return [...map.values()].sort((a, b) => Number(b.quality) - Number(a.quality));
+  return [...map.values()].sort((a, b) => {
+    const aQuality = Number(a.quality);
+    const bQuality = Number(b.quality);
+    if (!Number.isFinite(aQuality) || !Number.isFinite(bQuality)) return 0;
+    return bQuality - aQuality;
+  });
 }
 
 function applyQualityChoice(item: MusicItem, value: string) {
-  if (item.provider !== "joox") return item;
   const extra = getProviderExtra(item);
   if (!extra) return item;
   const match =
     extra.qualityOptions?.find((option) => option.value === value) ||
     extra.qualityOptions?.[0];
   if (!match) return item;
+  if (item.provider === "netease-official") {
+    return {
+      ...item,
+      extra: {
+        ...(item.extra as Record<string, unknown>),
+        selectedLevel: match.value,
+        level: match.value,
+      },
+    };
+  }
+  if (item.provider === "qq" || item.provider === "kugou") {
+    return {
+      ...item,
+      extra: {
+        ...(item.extra as Record<string, unknown>),
+        selectedParser: match.value,
+        selectedFormat: match.format,
+      },
+    };
+  }
+  if (item.provider !== "joox") return item;
   return {
     ...item,
     extra: {
@@ -76,14 +120,14 @@ function applyQualityChoice(item: MusicItem, value: string) {
   };
 }
 
-function getJooxItems(items: MusicItem[]) {
+function getQualityItems(items: MusicItem[]) {
   return items.filter((item) => (getProviderExtra(item)?.qualityOptions || []).length > 0);
 }
 
 function buildUrlRequest(item: MusicItem) {
   const params = new URLSearchParams({
     id: item.id,
-    provider: item.provider || "gequbao",
+    provider: item.provider || "netease-official",
   });
   if (item.extra !== undefined) {
     params.set("extra", JSON.stringify(item.extra));
@@ -132,13 +176,16 @@ const SourceLinkButton = ({ item }: { item: MusicItem }) => {
 };
 
 type PlayMode = "order" | "shuffle" | "single";
+const SEARCH_PAGE_SIZE = 20;
 
 const PROVIDER_OPTIONS = [
+  { id: "netease-official", name: "网易云官方" },
+  { id: "qq", name: "QQ音乐官方" },
+  { id: "kugou", name: "酷狗音乐" },
   { id: "gequbao", name: "歌曲宝" },
   { id: "gequhai", name: "歌曲海" },
   { id: "bugu", name: "布谷" },
   { id: "bodian", name: "波点" },
-  { id: "qq", name: "QQ音乐" },
   { id: "qqmp3", name: "QQMP3" },
   { id: "mitu", name: "米兔" },
   { id: "joox", name: "JOOX" },
@@ -153,7 +200,7 @@ const PROVIDER_OPTIONS = [
 
 export default function Home() {
   const [query, setQuery] = useState("");
-  const [provider, setProvider] = useState("jianbin-kugou");
+  const [provider, setProvider] = useState("netease-official");
   const [providerMenuOpen, setProviderMenuOpen] = useState(false);
   const [results, setResults] = useState<MusicItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -180,6 +227,11 @@ export default function Home() {
   const [resolvingMusicId, setResolvingMusicId] = useState<string | null>(null);
   const [qualityModal, setQualityModal] = useState<QualityModalState | null>(null);
   const [selectedQualityValue, setSelectedQualityValue] = useState("");
+  const [playerDrawerOpen, setPlayerDrawerOpen] = useState(false);
+  const [lyricLines, setLyricLines] = useState<LyricLine[]>([]);
+  const [lyricLoading, setLyricLoading] = useState(false);
+  const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const activeProviderName = PROVIDER_OPTIONS.find((option) => option.id === provider)?.name || "选择渠道";
 
   const openSourceUrl = async (item: MusicItem) => {
@@ -201,23 +253,51 @@ export default function Home() {
     return next;
   };
 
+  const fetchSearchPage = async (offset: number) => {
+    const params = new URLSearchParams({
+      q: query.trim(),
+      provider,
+      limit: String(SEARCH_PAGE_SIZE),
+      offset: String(offset),
+    });
+    const res = await fetch(`/api/search?${params.toString()}`);
+    const data = await res.json();
+    const items = Array.isArray(data.items) ? data.items : [];
+    setHasMoreResults(items.length === SEARCH_PAGE_SIZE);
+    return items as MusicItem[];
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
-    
+
     setLoading(true);
     setSearched(true);
     setResults([]);
     setSelectedIds(new Set());
+    setHasMoreResults(false);
     
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&provider=${provider}`);
-      const data = await res.json();
-      setResults(data.items || []);
+      const items = await fetchSearchPage(0);
+      setResults(items);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (loadingMore || loading || !query.trim()) return;
+
+    setLoadingMore(true);
+    try {
+      const items = await fetchSearchPage(results.length);
+      setResults((prev) => [...prev, ...items]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -361,6 +441,52 @@ export default function Home() {
   }, [volume]);
 
   useEffect(() => {
+    if (!activeMusic) {
+      setLyricLines([]);
+      setLyricLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLyricLoading(true);
+    setLyricLines([]);
+
+    const params = new URLSearchParams({
+      id: activeMusic.id,
+      provider: activeMusic.provider || "netease-official",
+    });
+    if (activeMusic.extra !== undefined) {
+      params.set("extra", JSON.stringify(activeMusic.extra));
+    }
+
+    fetch(`/api/lyric?${params.toString()}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        const lines = Array.isArray(data?.lines) ? data.lines : [];
+        setLyricLines(
+          lines.filter(
+            (line: LyricLine) =>
+              typeof line.time === "number" && typeof line.text === "string" && line.text.trim()
+          )
+        );
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error("Lyric load failed", error);
+          setLyricLines([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLyricLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeMusic]);
+
+  useEffect(() => {
     const env = (window as Window & { __COCO_ENV?: { ENABLE_DOWNLOAD?: string } }).__COCO_ENV;
     if (env?.ENABLE_DOWNLOAD === "0") {
       setDownloadEnabled(false);
@@ -389,7 +515,7 @@ export default function Home() {
       const response = await axios.get(`/api/download`, {
         params: {
           id: task.musicItem.id,
-          provider: task.musicItem.provider || 'gequbao',
+          provider: task.musicItem.provider || 'netease-official',
           filename: task.fileName,
           extra: task.musicItem.extra ? JSON.stringify(task.musicItem.extra) : undefined,
         },
@@ -467,15 +593,17 @@ export default function Home() {
   };
 
   const openQualityModal = (items: MusicItem[], mode: "single" | "batch") => {
-    const jooxItems = getJooxItems(items);
-    if (jooxItems.length === 0) return false;
-    const options = collectQualityOptions(jooxItems);
+    const qualityItems = getQualityItems(items);
+    if (qualityItems.length === 0) return false;
+    const options = collectQualityOptions(qualityItems);
     if (options.length === 0) return false;
-    setSelectedQualityValue(buildQualityValue(getProviderExtra(jooxItems[0])) || options[0].value);
+    const optionKind = qualityItems.some((item) => item.provider === "qq" || item.provider === "kugou") ? "downloadSource" : "quality";
+    setSelectedQualityValue(buildQualityValue(getProviderExtra(qualityItems[0])) || options[0].value);
     setQualityModal({
       mode,
       items,
-      jooxCount: jooxItems.length,
+      qualityItemCount: qualityItems.length,
+      optionKind,
     });
     return true;
   };
@@ -948,6 +1076,19 @@ export default function Home() {
                     );
                   })}
                 </div>
+                {hasMoreResults ? (
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c0c7d4]/40 bg-white px-5 py-2.5 text-sm font-medium text-[#1b1b1c] shadow-sm transition-colors hover:border-[#005faa]/30 hover:bg-[#d3e3ff]/35 disabled:cursor-wait disabled:opacity-70 dark:border-white/10 dark:bg-[#242526] dark:text-[#f3f0ef] dark:hover:bg-[#303030]"
+                    >
+                      {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {loadingMore ? "加载中..." : "加载更多"}
+                    </button>
+                  </div>
+                ) : null}
               </motion.div>
             ) : searched ? (
               <motion.div
@@ -975,13 +1116,25 @@ export default function Home() {
 
       <QualitySelectModal
         isOpen={Boolean(qualityModal)}
-        title={qualityModal?.mode === "batch" ? "选择批量下载音质" : "选择下载音质"}
-        description={
-          qualityModal?.mode === "batch"
-            ? `本次会把所选音质应用到 ${qualityModal?.jooxCount || 0} 首 JOOX 曲目。`
-            : `为这首 JOOX 歌曲选择一个下载音质。`
+        title={
+          qualityModal?.optionKind === "downloadSource"
+            ? qualityModal?.mode === "batch"
+              ? "选择批量下载线路"
+              : "选择下载线路"
+            : qualityModal?.mode === "batch"
+              ? "选择批量下载音质"
+              : "选择下载音质"
         }
-        options={qualityModal ? collectQualityOptions(getJooxItems(qualityModal.items)) : []}
+        description={
+          qualityModal?.optionKind === "downloadSource"
+            ? qualityModal?.mode === "batch"
+              ? `本次会把所选线路应用到 ${qualityModal?.qualityItemCount || 0} 首支持线路选择的曲目。`
+              : "请选择本次下载使用的解析线路。"
+            : qualityModal?.mode === "batch"
+              ? `本次会把所选音质应用到 ${qualityModal?.qualityItemCount || 0} 首支持音质选择的曲目。`
+              : "请选择本次下载使用的音质。"
+        }
+        options={qualityModal ? collectQualityOptions(getQualityItems(qualityModal.items)) : []}
         value={selectedQualityValue}
         onChange={setSelectedQualityValue}
         onClose={() => setQualityModal(null)}
@@ -1086,9 +1239,34 @@ export default function Home() {
             onSeek={handleSeek}
             volume={volume}
             onVolumeChange={setVolume}
+            onOpenPlayer={() => setPlayerDrawerOpen(true)}
           />
         )}
       </AnimatePresence>
+
+      <FullscreenPlayerDrawer
+        isOpen={playerDrawerOpen}
+        music={activeMusic}
+        isPlaying={playing}
+        lyrics={lyricLines}
+        lyricLoading={lyricLoading}
+        currentTime={currentTime}
+        duration={duration}
+        onClose={() => setPlayerDrawerOpen(false)}
+        onPlayPause={() => {
+          if (!activeMusic || resolvingMusicId === activeMusic.id) return;
+          if (playing) {
+            audioRef.current?.pause();
+            setPlaying(false);
+          } else {
+            audioRef.current?.play();
+            setPlaying(true);
+          }
+        }}
+        onPrev={canPrev ? handlePrev : undefined}
+        onNext={canNext ? handleNext : undefined}
+        onSeek={handleSeek}
+      />
     </main>
   );
 }

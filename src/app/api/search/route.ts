@@ -5,15 +5,17 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const q = searchParams.get('q');
   const providerName = searchParams.get('provider');
+  const limit = Math.min(Math.max(Number(searchParams.get('limit')) || 20, 1), 50);
+  const offset = Math.max(Number(searchParams.get('offset')) || 0, 0);
 
   if (!q) {
     return NextResponse.json({ error: 'Missing query' }, { status: 400 });
   }
 
   const resolvedProviderName =
-    providerName && providerName !== 'all' ? providerName : 'jianbin-kugou';
+    providerName && providerName !== 'all' ? providerName : 'netease-official';
   const provider = getProvider(resolvedProviderName);
-  const items = await provider.search(q);
+  const items = await provider.search(q, limit, offset);
 
   return NextResponse.json({ items });
 }

@@ -52,17 +52,17 @@ export function QualitySelectModal({
             className="fixed left-1/2 top-1/2 z-[110] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900"
           >
             <div className="relative overflow-hidden p-6">
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.18),_transparent_70%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.22),_transparent_70%)]" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,_rgba(0,95,170,0.16),_transparent_70%)] dark:bg-[radial-gradient(circle_at_top,_rgba(163,201,255,0.20),_transparent_70%)]" />
 
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 z-20 rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                className="absolute right-4 top-4 z-20 cursor-pointer rounded-full p-2 text-slate-400 transition-colors hover:bg-[#005faa]/10 hover:text-[#005faa] dark:hover:bg-white/10 dark:hover:text-[#a3c9ff]"
               >
                 <X className="h-5 w-5" />
               </button>
 
               <div className="relative">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300">
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#d3e3ff] text-[#005faa] dark:bg-[#003f6d] dark:text-[#a3c9ff]">
                   <Music2 className="h-6 w-6" />
                 </div>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">{title}</h2>
@@ -78,10 +78,10 @@ export function QualitySelectModal({
                       type="button"
                       onClick={() => onChange(option.value)}
                       className={cn(
-                        "flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all",
+                        "flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3 text-left transition-all",
                         active
-                          ? "border-sky-300 bg-sky-50 text-sky-700 shadow-sm dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-200"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-sky-800 dark:hover:bg-slate-800/80"
+                          ? "border-[#005faa]/30 bg-[#d3e3ff]/45 text-[#005faa] shadow-sm dark:border-[#a3c9ff]/35 dark:bg-[#003f6d]/45 dark:text-[#a3c9ff]"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-[#005faa]/25 hover:bg-[#d3e3ff]/25 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-[#a3c9ff]/35 dark:hover:bg-slate-800/80"
                       )}
                     >
                       <div>
@@ -94,7 +94,7 @@ export function QualitySelectModal({
                         className={cn(
                           "flex h-6 w-6 items-center justify-center rounded-full border",
                           active
-                            ? "border-sky-500 bg-sky-500 text-white"
+                            ? "border-[#005faa] bg-[#005faa] text-white dark:border-[#a3c9ff] dark:bg-[#a3c9ff] dark:text-[#001c39]"
                             : "border-slate-300 text-transparent dark:border-slate-600"
                         )}
                       >
@@ -107,12 +107,12 @@ export function QualitySelectModal({
 
               <div className="mt-6 flex items-center justify-between gap-3">
                 <div className="text-xs leading-5 text-slate-400 dark:text-slate-500">
-                  不支持所选音质的曲目会自动回退到该曲可用的最佳音质。
+                  不支持所选选项的曲目会自动回退到该曲可用的最佳方案。
                 </div>
                 <button
                   type="button"
                   onClick={onConfirm}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-full bg-sky-500 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-sky-600"
+                  className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-[#005faa] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0078d4]"
                 >
                   <Download className="h-4 w-4" />
                   开始下载

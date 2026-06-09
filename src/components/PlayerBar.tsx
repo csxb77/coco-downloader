@@ -20,6 +20,7 @@ interface PlayerBarProps {
   volume: number;
   onVolumeChange: (volume: number) => void;
   isResolving?: boolean;
+  onOpenPlayer?: () => void;
 }
 
 export function PlayerBar({
@@ -36,6 +37,7 @@ export function PlayerBar({
   volume,
   onVolumeChange,
   isResolving = false,
+  onOpenPlayer,
 }: PlayerBarProps) {
   const formatTime = (time?: number) => {
     const t = typeof time === "number" ? time : 0;
@@ -62,7 +64,7 @@ export function PlayerBar({
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        className="fixed bottom-0 left-0 right-0 z-50 h-20 bg-white/90 shadow-[0_-4px_20px_rgba(0,0,0,0.18)] backdrop-blur-2xl dark:bg-[#242526]/92"
+        className="fixed bottom-0 left-0 right-0 z-50 h-24 bg-white/90 shadow-[0_-4px_20px_rgba(0,0,0,0.18)] backdrop-blur-2xl dark:bg-[#242526]/92"
       >
         <div className="absolute left-0 top-0 h-[2px] w-full overflow-hidden bg-[#e5e2e1] dark:bg-white/10">
           <div
@@ -73,8 +75,15 @@ export function PlayerBar({
           </div>
         </div>
 
-        <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between gap-4 px-4 md:px-6">
-          <div className="flex min-w-0 flex-1 items-center gap-3 md:w-1/3">
+        <div
+          onClick={onOpenPlayer}
+          className="mx-auto flex h-full w-full max-w-[1440px] cursor-pointer items-center justify-between gap-4 px-4 pt-2 md:px-6"
+        >
+          <button
+            type="button"
+            onClick={onOpenPlayer}
+            className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg text-left transition-colors hover:bg-[#005faa]/5 md:w-1/3 dark:hover:bg-white/5"
+          >
             <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-[#c0c7d4]/20 bg-[#f0eded] shadow-sm dark:border-white/10 dark:bg-[#303030]">
               {currentMusic.cover ? (
                 <Image
@@ -97,9 +106,9 @@ export function PlayerBar({
                 {isResolving ? "正在解析音源..." : currentMusic.artist}
               </p>
             </div>
-          </div>
+          </button>
 
-          <div className="flex items-center justify-center gap-3 sm:gap-5 md:hidden">
+          <div className="flex items-center justify-center gap-3 sm:gap-5 md:hidden" onClick={(e) => e.stopPropagation()}>
             <button 
               onClick={onPlayPause}
               disabled={isResolving}
@@ -123,7 +132,7 @@ export function PlayerBar({
             </button>
           </div>
 
-          <div className="hidden flex-1 flex-col items-center md:flex md:w-1/3">
+          <div className="hidden flex-1 cursor-default flex-col items-center justify-center md:flex md:w-1/3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-6">
               <button 
                 onClick={onPrev}
@@ -178,7 +187,7 @@ export function PlayerBar({
             </div>
           </div>
 
-          <div className="hidden min-w-[150px] items-center justify-end gap-4 md:flex md:w-1/3">
+          <div className="hidden min-w-[150px] cursor-default items-center justify-end gap-4 md:flex md:w-1/3" onClick={(e) => e.stopPropagation()}>
             <div className="group flex w-32 items-center gap-2">
               <button 
                 onClick={() => onVolumeChange(volume === 0 ? 1 : 0)}

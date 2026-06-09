@@ -44,6 +44,13 @@ type GequhaiItem = {
   playUrl?: string;
 };
 
+export type GequhaiLyricData = {
+  songid: string;
+  provider: 'gequhai';
+  lines: Array<{ time: number; text: string }>;
+  lrc: string;
+};
+
 function decodeQuarkUrl(quarkUrl: string) {
   try {
     const b64 = quarkUrl.replace(/#/g, 'H');
@@ -121,6 +128,36 @@ function extractExt(url: string) {
   return parts.length > 1 ? parts[parts.length - 1] : 'mp3';
 }
 
+function parseLyricLines(lyric: string) {
+  const lines: Array<{ time: number; text: string }> = [];
+  const timePattern = /\[(\d{1,2}):(\d{1,2})(?:\.(\d{1,3}))?\]/g;
+
+  for (const rawLine of lyric.split(/\r?\n/)) {
+    const matches = [...rawLine.matchAll(timePattern)];
+    if (matches.length === 0) continue;
+
+    const text = rawLine.replace(timePattern, '').trim();
+    for (const match of matches) {
+      const minutes = Number(match[1]);
+      const seconds = Number(match[2]);
+      const fraction = match[3] ? Number(match[3].padEnd(3, '0').slice(0, 3)) / 1000 : 0;
+      lines.push({ time: minutes * 60 + seconds + fraction, text });
+    }
+  }
+
+  return lines
+    .filter((line) => line.text && !line.text.includes('歌词获取失败'))
+    .sort((a, b) => a.time - b.time);
+}
+
+function cleanLyric(value: string) {
+  const lyric = value
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return lyric && !lyric.includes('歌词获取失败') ? lyric : '';
+}
+
 export class GequhaiProvider implements MusicProvider {
   name = 'gequhai';
 
@@ -186,5 +223,26 @@ export class GequhaiProvider implements MusicProvider {
       console.error('Gequhai getPlayInfo error:', error);
       throw error;
     }
+  }
+
+  async getLyric(id: string, extra?: unknown): Promise<GequhaiLyricData> {
+    const playUrl = this.getPlayUrl(id, extra);
+    const { data: html } = await axios.get(playUrl, { headers: SEARCH_HEADERS, timeout: REQUEST_TIMEOUT });
+    const $ = cheerio.load(html);
+    const lrc = cleanLyric($('#content-lrc2').text().trim());
+
+    return {
+      songid: id,
+      provider: this.name,
+      lines: parseLyricLines(lrc),
+      lrc,
+    };
+  }
+
+  private getPlayUrl(id: string, extra?: unknown) {
+    const candidate = (extra as { playUrl?: unknown } | undefined)?.playUrl;
+    return typeof candidate === 'string' && candidate.trim()
+      ? candidate
+      : `https://www.gequhai.com/play/${id}`;
   }
 }
