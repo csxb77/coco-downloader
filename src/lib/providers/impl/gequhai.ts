@@ -233,7 +233,7 @@ export class GequhaiProvider implements MusicProvider {
 
     return {
       songid: id,
-      provider: this.name,
+      provider: 'gequhai',
       lines: parseLyricLines(lrc),
       lrc,
     };

@@ -182,7 +182,7 @@ export class BuguProvider implements MusicProvider {
 
     return {
       songid: id,
-      provider: this.name,
+      provider: 'bugu',
       lines: parseLyricLines(lrc),
       lrc,
     };

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Github, Sun, Moon, Heart } from "lucide-react";
+import { Download, Github, Sun, Moon, Heart } from "lucide-react";
 import { useState, MouseEvent } from "react";
 import { useTheme } from "next-themes";
 import DeveloperPanel from "./DeveloperPanel";
@@ -65,6 +65,17 @@ export function Navbar() {
         </Link>
         
         <div className="flex items-center gap-2">
+          <a
+            href="https://github.com/markcxx/coco-downloader/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#005faa] px-3 py-2 text-sm font-medium text-white transition-all duration-300 hover:bg-[#0078d4] dark:bg-[#a3c9ff] dark:text-[#001c39] dark:hover:bg-[#d3e3ff]"
+            title="下载客户端"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">下载客户端</span>
+          </a>
+
           <button
             onClick={() => setShowDonation(true)}
             className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-full transition-all duration-300 cursor-pointer"

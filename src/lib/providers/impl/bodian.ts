@@ -149,7 +149,7 @@ export class BodianProvider implements MusicProvider {
       const lrc = cleanLyric(content);
       return {
         songid: id,
-        provider: this.name,
+        provider: 'bodian',
         lines: parseLyricLines(lrc),
         lrc,
       };
@@ -158,7 +158,7 @@ export class BodianProvider implements MusicProvider {
       const lrc = cleanLyric(info.lyric || '');
       return {
         songid: id,
-        provider: this.name,
+        provider: 'bodian',
         lines: parseLyricLines(lrc),
         lrc,
       };

@@ -226,7 +226,7 @@ export class QQProvider implements MusicProvider {
     const lrc = encoded ? decodeBase64(encoded) : '';
     return {
       songid: id,
-      provider: this.name,
+      provider: 'qq',
       lines: parseLyricLines(lrc),
       lrc,
     };

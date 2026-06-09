@@ -179,8 +179,8 @@ type PlayMode = "order" | "shuffle" | "single";
 const SEARCH_PAGE_SIZE = 20;
 
 const PROVIDER_OPTIONS = [
-  { id: "netease-official", name: "网易云官方" },
-  { id: "qq", name: "QQ音乐官方" },
+  { id: "netease-official", name: "网易云音乐" },
+  { id: "qq", name: "QQ音乐" },
   { id: "kugou", name: "酷狗音乐" },
   { id: "gequbao", name: "歌曲宝" },
   { id: "gequhai", name: "歌曲海" },
