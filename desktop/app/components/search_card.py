@@ -48,21 +48,21 @@ class SearchCard(SimpleCardWidget):
         self.platformComboBox.setFixedWidth(150)
         self.platformComboBox.setFixedHeight(40)
         self.platformComboBox.addItems([
-            self.tr("网易云音乐"),
-            self.tr("QQ音乐"),
-            self.tr("酷狗音乐"),
+            self.tr("cenguigui"),
+            self.tr("XCVTS"),
+            self.tr("海棠"),
             self.tr("歌曲宝"),
             self.tr("歌曲海"),
             self.tr("布谷"),
             self.tr("波点"),
-            self.tr("QQ音乐(MP3)"),
+            self.tr("QQMP3"),
             self.tr("米兔"),
             self.tr("JOOX"),
             self.tr("咪咕"),
             self.tr("力音"),
             self.tr("爱听"),
-            self.tr("煎饼-酷狗"),
-            self.tr("煎饼-酷我"),
+            self.tr("煎饼酷狗"),
+            self.tr("煎饼酷我"),
         ])
         self.platformComboBox.setCurrentIndex(0)
 

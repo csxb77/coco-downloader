@@ -179,9 +179,9 @@ type PlayMode = "order" | "shuffle" | "single";
 const SEARCH_PAGE_SIZE = 20;
 
 const PROVIDER_OPTIONS = [
-  { id: "netease-official", name: "网易云音乐" },
-  { id: "qq", name: "QQ音乐" },
-  { id: "kugou", name: "酷狗音乐" },
+  { id: "netease-official", name: "cenguigui" },
+  { id: "qq", name: "XCVTS" },
+  { id: "kugou", name: "海棠" },
   { id: "gequbao", name: "歌曲宝" },
   { id: "gequhai", name: "歌曲海" },
   { id: "bugu", name: "布谷" },
@@ -192,10 +192,10 @@ const PROVIDER_OPTIONS = [
   { id: "migu", name: "咪咕" },
   { id: "livepoo", name: "力音" },
   { id: "aiting", name: "爱听" },
-  { id: "jianbin-netease", name: "煎饼-网易" },
-  { id: "jianbin-qq", name: "煎饼-QQ" },
-  { id: "jianbin-kugou", name: "煎饼-酷狗" },
-  { id: "jianbin-kuwo", name: "煎饼-酷我" },
+  { id: "jianbin-netease", name: "煎饼-1" },
+  { id: "jianbin-qq", name: "煎饼-2" },
+  { id: "jianbin-kugou", name: "煎饼-3" },
+  { id: "jianbin-kuwo", name: "煎饼-4" },
 ];
 
 export default function Home() {

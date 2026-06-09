@@ -37,23 +37,23 @@ PROVIDERS: dict[str, MusicProvider] = {
 }
 
 PROVIDER_DISPLAY_NAMES = {
-    "网易云音乐": "netease-official",
-    "QQ音乐": "qq-official",
-    "酷狗音乐": "kugou",
+    "cenguigui": "netease-official",
+    "XCVTS": "qq-official",
+    "海棠": "kugou",
     "歌曲宝": "gequbao",
     "歌曲海": "gequhai",
     "布谷": "bugu",
     "波点": "bodian",
-    "QQ音乐(MP3)": "qqmp3",
+    "QQMP3": "qqmp3",
     "米兔": "mitu",
     "JOOX": "joox",
     "咪咕": "migu",
     "力音": "livepoo",
     "爱听": "aiting",
-    "煎饼-网易云": "jianbin-netease",
-    "煎饼-QQ": "jianbin-qq",
-    "煎饼-酷狗": "jianbin-kugou",
-    "煎饼-酷我": "jianbin-kuwo",
+    "煎饼-1": "jianbin-netease",
+    "煎饼-2": "jianbin-qq",
+    "煎饼-3": "jianbin-kugou",
+    "煎饼-4": "jianbin-kuwo",
 }
 
 
